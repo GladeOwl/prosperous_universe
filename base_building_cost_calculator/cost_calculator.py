@@ -5,16 +5,20 @@ import json
 
 
 def get_old_data(file_path):
-    with open(file_path, "r") as jsonf:
-        data = json.load(jsonf)
-        return data
+    try:
+        with open(file_path, "r") as jsonf:
+            data: dict = json.load(jsonf)
+            return data
+    except Exception:
+        raise Exception("Could not access the existing data!")
 
 
 def get_new_data(file_path):
     try:
         response = requests.get("https://rest.fnar.net/building/allbuildings")
+        print(type(response))
         with open(file_path, "w") as jsonf:
-            json_data = {"buildings": json.loads(response.text)}
+            json_data: dict = {"buildings": json.loads(response.text)}
             jsonf.write(json.dumps(json_data, indent=4))
             print("New Data Imported")
             return json_data
@@ -23,12 +27,13 @@ def get_new_data(file_path):
         return get_old_data(file_path)
 
 
-def add_pop():
-    pass
+def add_pop(info, population, amount):
+    for type in population:
+        population[type] += info[type] * amount
 
 
-def input_buildings(buildings, data):
-    ticker = input("Building Ticker?: ")
+def input_buildings(buildings, data, population):
+    ticker: str = input("Building Ticker?: ")
 
     if ticker == "":
         print("Please input a building name.")
@@ -38,16 +43,20 @@ def input_buildings(buildings, data):
         if item["Ticker"] == ticker:
             amount: int = int(input("Build Amount? (default: 1): ")) or 1
             buildings.append({"info": item, "amount": amount})
+            add_pop(item, population, amount)
+
             print(f"Building Added: {item['Name']}, {amount}x.")
-            return
+            return item["AreaCost"] * amount
 
     print("Bad Ticker.")
+    return 0
 
 
 def get_resource_cost(buildings, resources):
     for building in buildings:
         for item in building["info"]["BuildingCosts"]:
             name = item["CommodityTicker"]
+
             if name in resources:
                 resources[name] += item["Amount"] * building["amount"]
             else:
@@ -55,18 +64,19 @@ def get_resource_cost(buildings, resources):
 
 
 if __name__ == "__main__":
-    file_path = os.path.join(sys.path[0], "./buildings.json")
-    get_data = input("Import new data? (y/n) (default: y): ") or "y"
+    file_path: str = os.path.join(sys.path[0], "./buildings.json")
+    get_data: str = input("Import new data? (y/n) (default: y): ") or "y"
 
     if get_data == "y" or not os.path.isfile(file_path):
         print("Importing new data.")
-        data = get_new_data(file_path)
+        data: dict = get_new_data(file_path)
     else:
-        data = get_old_data(file_path)
+        data: dict = get_old_data(file_path)
 
-    buildings = []
-    resources = {}
-    population = {
+    total_area: int = 0
+    buildings: list = []
+    resources: dict = {}
+    population: dict = {
         "Pioneers": 0,
         "Settlers": 0,
         "Technicians": 0,
@@ -74,15 +84,16 @@ if __name__ == "__main__":
         "Scientists": 0,
     }
 
-    is_done = False
+    is_done: bool = False
 
     while not is_done:
-        input_buildings(buildings, data)
+        total_area += input_buildings(buildings, data, population)
 
         is_done_input = input("Done? (y/n) (default: n): ")
         if is_done_input == "y":
             is_done = True
 
     get_resource_cost(buildings, resources)
-
     print(resources)
+
+    # TODO: This guy is pretty much done. Just need a way to combine all the info into a good terminal output
