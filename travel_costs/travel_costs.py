@@ -2,8 +2,8 @@ import requests
 import csv
 import os
 
-ftl_amount: float = float(input("FTL amount:")) or 0
 stl_amount: float = float(input("STL amount:")) or 0
+ftl_amount: float = float(input("FTL amount:")) or 0
 
 response = requests.get("https://rest.fnar.net/csv/prices")
 
@@ -51,5 +51,5 @@ print(
 )
 print(f"Total Cost of the Journey: {total_cost}")
 
-os.remove("fuel_prices.csv")
-os.remove("fuel_prices.txt")
+# os.remove("fuel_prices.csv")
+# os.remove("fuel_prices.txt")

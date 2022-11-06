@@ -1,0 +1,9 @@
+EXO 2
+PT 2
+KOM 4
+REP 1
+MED 4
+HMS 4
+SCN 1
+ALE 8
+SC 1
